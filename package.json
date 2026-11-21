@@ -27,7 +27,8 @@
     "expo-secure-store": "~15.0.7",
     "expo-image-picker": "~17.0.8",
     "expo-video": "~3.0.11",
-    "expo-camera": "~17.0.10"
+    "expo-camera": "~17.0.10",
+    "expo-audio": "~1.0.16"
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
