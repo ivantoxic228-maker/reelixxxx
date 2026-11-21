@@ -49,7 +49,7 @@ export default function UserProfileScreen() {
   if (!profile) return <View style={styles.center}><Text style={styles.error}>{error || "Профиль не найден"}</Text><Pressable onPress={() => router.back()}><Text style={styles.link}>Назад</Text></Pressable></View>;
   return (
     <ScrollView style={styles.screen}>
-      <View style={styles.header}><Pressable onPress={() => router.back()}><Ionicons name="arrow-back" size={23} color={colors.text} /></Pressable><Text style={styles.headerTitle}>Профиль</Text><Pressable onPress={() => Share.share({message:`Reelix · @${profile.username}`})}><Ionicons name="share-social-outline" size={21} color={colors.text}/></Pressable></View>
+      <View style={styles.header}><Pressable onPress={() => router.back()}><Ionicons name="arrow-back" size={23} color={colors.text} /></Pressable><Text style={styles.headerTitle}>Профиль</Text><Pressable onPress={() => Share.share({message:`Открой профиль @${profile.username} в Reelix: reelix://user/${profile.username}`})}><Ionicons name="share-social-outline" size={21} color={colors.text}/></Pressable></View>
       <View style={styles.profileTop}>
         <View style={styles.avatar}><Text style={styles.avatarText}>{(profile.displayName || profile.username).slice(0,1).toUpperCase()}</Text></View>
         <Text style={styles.name}>{profile.displayName}{profile.isVerified ? "  ✓" : ""}</Text><Text style={styles.handle}>@{profile.username}</Text>
