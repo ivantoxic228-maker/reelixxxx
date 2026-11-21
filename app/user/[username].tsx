@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert } from "react-native";
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert, ScrollView, Share } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { VideoView, useVideoPlayer } from "expo-video";
 import { colors } from "../../src/theme";
 import { apiRequest } from "../../src/api";
 
 type Profile = { id: string; username: string; displayName: string; avatarUrl?: string | null; bio: string; isPrivate: boolean; isVerified?: boolean; _count: { posts: number; followers: number; following: number } };
+type PublicPost = { id: string; caption: string; videoUrl: string; views: number; _count: { likes: number; comments: number } };
+function ProfileVideo({ post }: { post: PublicPost }) {
+  const player = useVideoPlayer(post.videoUrl, p => { p.loop = true; });
+  return <View style={styles.videoCard}><VideoView player={player} style={styles.video} contentFit="cover" nativeControls/><Text style={styles.videoCaption} numberOfLines={2}>{post.caption || "Видео"}</Text><Text style={styles.videoMeta}>{post.views} просмотров · {post._count.likes} лайков</Text><Pressable onPress={() => Share.share({message:post.videoUrl})} style={styles.share}><Ionicons name="share-social-outline" size={16} color={colors.violet}/><Text style={styles.shareText}>Поделиться</Text></Pressable></View>;
+}
 export default function UserProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [posts, setPosts] = useState<PublicPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [following, setFollowing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -16,14 +23,21 @@ export default function UserProfileScreen() {
   useEffect(() => {
     let active = true;
     apiRequest<Profile>(`/users/${encodeURIComponent(username || "")}`)
-      .then(data => { if (active) setProfile(data); })
+      .then(async data => {
+        if (!active) return;
+        setProfile(data);
+        if (!data.isPrivate) {
+          try { const videos = await apiRequest<PublicPost[]>(`/users/${encodeURIComponent(username || "")}/posts`); if (active) setPosts(videos); }
+          catch { if (active) setPosts([]); }
+        }
+      })
       .catch(e => { if (active) setError(e instanceof Error ? e.message : "Не удалось загрузить профиль"); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [username]);
   async function toggleFollow() {
     if (!profile || busy) return;
-    if (profile.isPrivate) { Alert.alert("Закрытый аккаунт", "Заявки на подписку пока не подключены. Мы не будем отправлять фиктивную заявку."); return; }
+    if (profile.isPrivate) { Alert.alert("Закрытый аккаунт", "Заявки на подписку пока не подключены."); return; }
     setBusy(true);
     try {
       const result = await apiRequest<{ following: boolean }>(`/users/${encodeURIComponent(profile.username)}/follow`, { method: "POST" }, true);
@@ -34,8 +48,8 @@ export default function UserProfileScreen() {
   if (loading) return <View style={styles.center}><ActivityIndicator color={colors.violet} /></View>;
   if (!profile) return <View style={styles.center}><Text style={styles.error}>{error || "Профиль не найден"}</Text><Pressable onPress={() => router.back()}><Text style={styles.link}>Назад</Text></Pressable></View>;
   return (
-    <View style={styles.screen}>
-      <View style={styles.header}><Pressable onPress={() => router.back()}><Ionicons name="arrow-back" size={23} color={colors.text} /></Pressable><Text style={styles.headerTitle}>Профиль</Text><View style={{ width: 23 }} /></View>
+    <ScrollView style={styles.screen}>
+      <View style={styles.header}><Pressable onPress={() => router.back()}><Ionicons name="arrow-back" size={23} color={colors.text} /></Pressable><Text style={styles.headerTitle}>Профиль</Text><Pressable onPress={() => Share.share({message:`Reelix · @${profile.username}`})}><Ionicons name="share-social-outline" size={21} color={colors.text}/></Pressable></View>
       <View style={styles.profileTop}>
         <View style={styles.avatar}><Text style={styles.avatarText}>{(profile.displayName || profile.username).slice(0,1).toUpperCase()}</Text></View>
         <Text style={styles.name}>{profile.displayName}{profile.isVerified ? "  ✓" : ""}</Text><Text style={styles.handle}>@{profile.username}</Text>
@@ -43,8 +57,8 @@ export default function UserProfileScreen() {
         {!!profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
         <Pressable style={[styles.follow, following && styles.following]} onPress={toggleFollow} disabled={busy}><Text style={[styles.followText, following && styles.followingText]}>{busy ? "..." : following ? "Вы подписаны" : profile.isPrivate ? "Закрытый аккаунт" : "Подписаться"}</Text></Pressable>
       </View>
-      <View style={styles.privateBox}><Ionicons name={profile.isPrivate ? "lock-closed-outline" : "videocam-outline"} size={25} color={colors.violet} /><Text style={styles.privateTitle}>{profile.isPrivate ? "Это закрытый профиль" : "Видео автора"}</Text><Text style={styles.privateText}>{profile.isPrivate ? "Публикации доступны только одобренным подписчикам." : "Сетка публикаций появится здесь после подключения отдельной выдачи профиля."}</Text></View>
-    </View>
+      {profile.isPrivate ? <View style={styles.privateBox}><Ionicons name="lock-closed-outline" size={25} color={colors.violet} /><Text style={styles.privateTitle}>Это закрытый профиль</Text><Text style={styles.privateText}>Публикации доступны только одобренным подписчикам.</Text></View> : <View style={styles.posts}><Text style={styles.postsTitle}>Видео автора</Text>{posts.length ? posts.map(post => <ProfileVideo key={post.id} post={post}/>) : <Text style={styles.privateText}>У автора пока нет открытых публикаций.</Text>}</View>}
+    </ScrollView>
   );
 }
 const styles = StyleSheet.create({
@@ -65,10 +79,12 @@ const styles = StyleSheet.create({
   following: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
   followText: { color: "#fff", fontWeight: "700", fontSize: 13 },
   followingText: { color: colors.text },
-  privateBox: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 28, gap: 10 },
+  privateBox: { minHeight: 260, alignItems: "center", justifyContent: "center", paddingHorizontal: 28, gap: 10 },
   privateTitle: { color: colors.text, fontSize: 17, fontWeight: "800" },
   privateText: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: "center" },
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12 },
   error: { color: colors.danger, fontSize: 13 },
-  link: { color: colors.violet, fontWeight: "700" }
+  link: { color: colors.violet, fontWeight: "700" },
+  posts:{paddingTop:24,paddingBottom:40,gap:12},postsTitle:{fontSize:18,fontWeight:"800",color:colors.text},
+  videoCard:{backgroundColor:colors.surface,padding:10,gap:7},video:{width:"100%",height:360,backgroundColor:"#111"},videoCaption:{fontSize:13,color:colors.text,fontWeight:"700"},videoMeta:{fontSize:10,color:colors.muted},share:{flexDirection:"row",alignItems:"center",gap:6,paddingVertical:6},shareText:{fontSize:11,color:colors.violet,fontWeight:"700"}
 });
