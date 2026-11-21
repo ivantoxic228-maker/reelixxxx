@@ -3,6 +3,14 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class UsersService {
   constructor(private db: PrismaService) {}
+  async me(userId: string) {
+    const user = await this.db.user.findUnique({ where: { id: userId }, select: { id: true, email: true, username: true, displayName: true, avatarUrl: true, bio: true, isPrivate: true, createdAt: true, _count: { select: { posts: true, followers: true, following: true } } } });
+    if (!user) throw new NotFoundException('Пользователь не найден');
+    return user;
+  }
+  async updateMe(userId: string, input: { displayName?: string; bio?: string; avatarUrl?: string | null; isPrivate?: boolean }) {
+    return this.db.user.update({ where: { id: userId }, data: input, select: { id: true, email: true, username: true, displayName: true, avatarUrl: true, bio: true, isPrivate: true, updatedAt: true } });
+  }
   search(q: string) {
     return this.db.user.findMany({ where: { OR: [{ username: { contains: q, mode: 'insensitive' } }, { displayName: { contains: q, mode: 'insensitive' } }] }, take: 20, select: { id: true, username: true, displayName: true, avatarUrl: true, bio: true } });
   }
