@@ -11,6 +11,7 @@ class SoundDto {
   @IsString() @MaxLength(100) title!: string;
   @IsString() @MaxLength(100) artist!: string;
   @IsString() @MaxLength(2048) audioUrl!: string;
+  @IsString() @MaxLength(300) publicId!: string;
   @IsOptional() @IsString() @MaxLength(2048) coverUrl?: string;
   @IsOptional() @IsNumber() @Min(0) duration?: number;
   @IsOptional() @IsString() @MaxLength(40) source?: string;
