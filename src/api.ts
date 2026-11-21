@@ -1,5 +1,5 @@
 import * as SecureStore from "expo-secure-store";
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "https://reelixxxx-databaseurl.up.railwarelixhdhdjdy.app";
 export async function apiRequest<T>(path: string, options: RequestInit = {}, authenticated = false): Promise<T> {
   if (!API_URL) throw new Error("Сервер Reelix ещё не подключён. Нужен адрес опубликованного API.");
   const token = authenticated ? await SecureStore.getItemAsync("reelix_access_token") : null;
