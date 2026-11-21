@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class UsersService {
@@ -21,6 +21,12 @@ export class UsersService {
     const user = await this.db.user.findUnique({ where: { username: username.toLowerCase() }, select: { id: true, username: true, displayName: true, avatarUrl: true, bio: true, isPrivate: true, isVerified: true, createdAt: true, _count: { select: { posts: true, followers: true, following: true } } } });
     if (!user) throw new NotFoundException('Пользователь не найден');
     return user;
+  }
+  async profilePosts(username: string) {
+    const user = await this.db.user.findUnique({ where: { username: username.toLowerCase() }, select: { id: true, isPrivate: true } });
+    if (!user) throw new NotFoundException('Пользователь не найден');
+    if (user.isPrivate) throw new ForbiddenException('Публикации закрытого аккаунта недоступны');
+    return this.db.post.findMany({ where: { userId: user.id, isHidden: false }, orderBy: { createdAt: 'desc' }, take: 60, include: { sound: true, _count: { select: { likes: true, comments: true } } } });
   }
   async follow(followerId: string, username: string) {
     const target = await this.db.user.findUnique({ where: { username: username.toLowerCase() } });
