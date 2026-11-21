@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class UsersService {
   constructor(private db: PrismaService) {}
   async me(userId: string) {
-    const user = await this.db.user.findUnique({ where: { id: userId }, select: { id: true, email: true, username: true, displayName: true, avatarUrl: true, bio: true, isPrivate: true, createdAt: true, _count: { select: { posts: true, followers: true, following: true } } } });
+    const user = await this.db.user.findUnique({ where: { id: userId }, select: { id: true, email: true, username: true, displayName: true, avatarUrl: true, bio: true, isPrivate: true, isVerified: true, createdAt: true, _count: { select: { posts: true, followers: true, following: true } } } });
     if (!user) throw new NotFoundException('Пользователь не найден');
     return user;
   }
