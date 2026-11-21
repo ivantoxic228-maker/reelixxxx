@@ -10,11 +10,7 @@ import { apiRequest } from "../../src/api";
 
 type Sound = { id: string; title: string; artist: string; audioUrl: string; publicId?: string | null; duration?: number };
 function SoundRow({ sound, selected, onSelect }: { sound: Sound; selected: boolean; onSelect: () => void }) {
-  const player = useAudioPlayer(sound.audioUrl);
-  const [playing, setPlaying] = useState(false);
-  useEffect(() => { if (!selected && playing) { player.pause(); setPlaying(false); } }, [selected, playing, player]);
-  function toggle() { onSelect(); if (playing) { player.pause(); setPlaying(false); } else { player.play(); setPlaying(true); } }
-  return <Pressable style={styles.soundRow} onPress={toggle}><View style={{flex:1}}><Text style={styles.soundName}>{sound.title}</Text><Text style={styles.soundArtist}>{sound.artist}</Text></View><Ionicons name={selected && playing ? "pause-circle" : selected ? "checkmark-circle" : "play-circle-outline"} size={23} color={colors.violet}/></Pressable>;
+  return <Pressable style={styles.soundRow} onPress={onSelect}><View style={{flex:1}}><Text style={styles.soundName}>{sound.title}</Text><Text style={styles.soundArtist}>{sound.artist}</Text></View><Ionicons name={selected ? "checkmark-circle" : "play-circle-outline"} size={23} color={colors.violet}/></Pressable>;
 }
 function VideoPreview({ uri }: { uri: string }) {
   const player = useVideoPlayer(uri, p => { p.loop = true; });
@@ -35,9 +31,12 @@ export default function CreateScreen() {
   const [filter, setFilter] = useState<"none" | "vivid" | "mono">("none");
   const [sounds, setSounds] = useState<Sound[]>([]);
   const [soundId, setSoundId] = useState("");
+  const selectedSound = sounds.find(s => s.id === soundId);
+  const audioPlayer = useAudioPlayer(selectedSound?.audioUrl);
   const [showSounds, setShowSounds] = useState(false);
   const [busy, setBusy] = useState(false);
   useEffect(() => { apiRequest<Sound[]>("/posts/sounds").then(setSounds).catch(() => setSounds([])); }, []);
+  useEffect(() => { if (selectedSound) audioPlayer.play(); else audioPlayer.pause(); return () => audioPlayer.pause(); }, [soundId]);
   async function choose() {
     try {
       const selected = await pickVideo();
@@ -101,7 +100,7 @@ export default function CreateScreen() {
         <Text style={styles.label}>ТЕКСТ НА ВИДЕО</Text><TextInput style={styles.input} value={overlayText} onChangeText={setOverlayText} maxLength={60} placeholder="Добавь надпись на ролик" placeholderTextColor={colors.muted}/>
         <Text style={styles.label}>ЗВУКОВАЯ БИБЛИОТЕКА</Text>
         <Pressable style={styles.soundPicker} onPress={() => setShowSounds(v => !v)}><Ionicons name="musical-notes-outline" size={20} color={colors.violet}/><Text style={styles.soundText}>{sounds.find(s => s.id === soundId)?.title || "Выбрать звук"}</Text><Ionicons name={showSounds ? "chevron-up" : "chevron-down"} size={18} color={colors.muted}/></Pressable>
-        {showSounds && <View style={styles.soundList}>{sounds.map(s => <SoundRow key={s.id} sound={s} selected={soundId===s.id} onSelect={() => setSoundId(s.id)} />)}{!sounds.length && <Text style={styles.hint}>Библиотека пока пуста. Администратор может добавить лицензированные треки.</Text>}</View>}
+        {showSounds && <View style={styles.soundList}>{sounds.map(s => <SoundRow key={s.id} sound={s} selected={soundId===s.id} onSelect={() => { if (soundId === s.id) { audioPlayer.pause(); setSoundId(""); } else setSoundId(s.id); }} />)}{!sounds.length && <Text style={styles.hint}>Библиотека пока пуста. Администратор может добавить лицензированные треки.</Text>}</View>}
         <Text style={styles.label}>ОПИСАНИЕ</Text><TextInput style={[styles.input,styles.caption]} value={caption} onChangeText={setCaption} multiline maxLength={2200} placeholder="Расскажи о своём видео..." placeholderTextColor={colors.muted}/>
         <Pressable style={styles.publish} onPress={publish} disabled={busy}>{busy?<ActivityIndicator color="#fff"/>:<Text style={styles.primaryText}>Опубликовать видео</Text>}</Pressable>
         <Text style={styles.hint}>Обрезка, фильтр и надпись применяются при обработке видео на Cloudinary. Выбранный трек прослушивается в редакторе и добавляется поверх оригинального звука при обработке Cloudinary.</Text>
