@@ -14,7 +14,7 @@ function VideoPreview({ uri }: { uri: string }) {
 }
 export default function CreateScreen() {
   const [permission, requestPermission] = useCameraPermissions();
-  const camera = useRef<CameraView>(null);
+  const camera = useRef<CameraView | null>(null);
   const [facing, setFacing] = useState<"front" | "back">("back");
   const [recording, setRecording] = useState(false);
   const [uri, setUri] = useState("");
