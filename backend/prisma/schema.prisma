@@ -15,6 +15,8 @@ model User {
   bio          String   @default("")
   avatarUrl    String?
   isPrivate    Boolean  @default(false)
+  isVerified   Boolean  @default(false)
+  role         String   @default("USER")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   posts        Post[]
@@ -24,6 +26,7 @@ model User {
   followers    Follow[] @relation("Followers")
   sentMessages Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+  views        PostView[]
 }
 model Post {
   id           String   @id @default(cuid())
@@ -32,13 +35,45 @@ model Post {
   thumbnailUrl String?
   publicId     String?
   duration     Float?
+  views        Int      @default(0)
+  isFeatured   Boolean  @default(false)
+  isHidden     Boolean  @default(false)
   userId       String
+  soundId      String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sound        Sound?   @relation(fields: [soundId], references: [id], onDelete: SetNull)
   likes        Like[]
   comments     Comment[]
+  viewEvents   PostView[]
   @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([isFeatured, isHidden, createdAt])
+}
+model Sound {
+  id        String   @id @default(cuid())
+  title     String
+  artist    String
+  audioUrl  String
+  coverUrl  String?
+  duration  Float?
+  source    String   @default("creator")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  posts     Post[]
+  @@index([isActive, createdAt])
+}
+model PostView {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String?
+  watchMs   Int      @default(0)
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@index([postId, createdAt])
   @@index([userId, createdAt])
 }
 model Follow {
