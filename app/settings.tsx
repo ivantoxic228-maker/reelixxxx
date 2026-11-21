@@ -21,8 +21,8 @@ export default function SettingsScreen() {
     <View style={styles.screen}>
       <View style={styles.header}><Pressable onPress={() => router.back()}><Ionicons name="arrow-back" size={23} color={colors.text} /></Pressable><Text style={styles.title}>Настройки</Text><View style={{ width: 23 }} /></View>
       <Text style={styles.section}>АККАУНТ</Text>
-      <SettingRow icon="person-circle-outline" title="Данные профиля" detail="Имя, описание и фотография профиля" />
-      <SettingRow icon="lock-closed-outline" title="Приватность" detail="Закрытый аккаунт и управление доступом" />
+      <SettingRow icon="person-circle-outline" title="Данные профиля" detail="Имя и описание профиля" onPress={() => router.push("/edit-profile")} />
+      <SettingRow icon="lock-closed-outline" title="Приватность" detail="Управление закрытым аккаунтом" onPress={() => router.push("/edit-profile")} />
       <SettingRow icon="shield-checkmark-outline" title="Безопасность" detail="Пароль и защита аккаунта" />
       <SettingRow icon="checkmark-circle-outline" title="Верификация" detail="Подтверждение подлинности профиля" />
       <Text style={styles.section}>ПРИЛОЖЕНИЕ</Text>
