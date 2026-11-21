@@ -25,6 +25,12 @@ WHERE "email" = 'YOUR_ACCOUNT_EMAIL';
 - Grant or revoke the verified badge.
 - Add licensed audio tracks to the sound library and hide/unhide them.
 
+To add a soundtrack, first upload the audio file to your Cloudinary account as a **video resource** (Cloudinary stores audio assets under the video resource type). Then enter:
+- the secure delivery URL in the audio URL field;
+- the asset's exact Cloudinary Public ID in the Public ID field (for example, `reelix/sounds/my-track`).
+
+Reelix uses the Public ID to mix the soundtrack over the uploaded video during Cloudinary processing. The URL is used for in-editor preview.
+
 Only upload audio that Reelix has permission to distribute and use. Do not add commercial songs without the appropriate rights.
 
 ## Important
