@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import { useAudioPlayer } from "expo-audio";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { colors } from "../../src/theme";
@@ -22,6 +22,7 @@ function VideoPreview({ uri }: { uri: string }) {
 }
 export default function CreateScreen() {
   const [permission, requestPermission] = useCameraPermissions();
+  const [microphonePermission, requestMicrophonePermission] = useMicrophonePermissions();
   const camera = useRef<CameraView | null>(null);
   const [facing, setFacing] = useState<"front" | "back">("back");
   const [recording, setRecording] = useState(false);
@@ -45,6 +46,10 @@ export default function CreateScreen() {
   }
   async function startRecording() {
     if (!camera.current || recording) return;
+    if (!microphonePermission?.granted) {
+      const result = await requestMicrophonePermission();
+      if (!result.granted) { Alert.alert("Нужен микрофон", "Разреши запись звука, чтобы видео сохранялось со звуком."); return; }
+    }
     setRecording(true);
     try {
       const result = await camera.current.recordAsync({ maxDuration: 180 });
@@ -61,8 +66,10 @@ export default function CreateScreen() {
     setBusy(true);
     try {
       const uploaded = await uploadVideo({ uri, fileName: "reelix-clip.mp4", mimeType: "video/mp4" });
-      const videoUrl = buildEditedVideoUrl(uploaded, { trimStart: start, trimEnd: end, filter, overlayText, soundPublicId: sounds.find(s => s.id === soundId)?.publicId || undefined });
-      await apiRequest("/posts", { method: "POST", body: JSON.stringify({ videoUrl, publicId: uploaded.public_id, duration: Math.max(0.2, end - start), caption, soundId: soundId || undefined }) }, true);
+      const safeEnd = uploaded.duration ? Math.min(end, uploaded.duration) : end;
+      if (safeEnd <= start) throw new Error("Время обрезки выходит за длительность видео.");
+      const videoUrl = buildEditedVideoUrl(uploaded, { trimStart: start, trimEnd: safeEnd, filter, overlayText, soundPublicId: sounds.find(s => s.id === soundId)?.publicId || undefined });
+      await apiRequest("/posts", { method: "POST", body: JSON.stringify({ videoUrl, publicId: uploaded.public_id, duration: Math.max(0.2, safeEnd - start), caption, soundId: soundId || undefined }) }, true);
       setUri(""); setCaption(""); setOverlayText(""); setSoundId(""); setDuration(0); setTrimStart("0"); setTrimEnd("");
       Alert.alert("Опубликовано", "Видео добавлено в Reelix.");
     } catch (e) { Alert.alert("Не удалось опубликовать", e instanceof Error ? e.message : "Попробуй позже."); }
