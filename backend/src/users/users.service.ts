@@ -11,6 +11,9 @@ export class UsersService {
   async updateMe(userId: string, input: { displayName?: string; bio?: string; avatarUrl?: string | null; isPrivate?: boolean }) {
     return this.db.user.update({ where: { id: userId }, data: input, select: { id: true, email: true, username: true, displayName: true, avatarUrl: true, bio: true, isPrivate: true, updatedAt: true } });
   }
+  myPosts(userId: string) {
+    return this.db.post.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 100, include: { sound: true, _count: { select: { likes: true, comments: true } } } });
+  }
   search(q: string) {
     return this.db.user.findMany({ where: { OR: [{ username: { contains: q, mode: 'insensitive' } }, { displayName: { contains: q, mode: 'insensitive' } }] }, take: 20, select: { id: true, username: true, displayName: true, avatarUrl: true, bio: true } });
   }
