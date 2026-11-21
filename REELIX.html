@@ -30,7 +30,30 @@ body{background:#f7f8fc;color:var(--text);font-family:Inter,-apple-system,BlinkM
 #view-create .card{max-width:720px;margin:auto}#view-create h2{letter-spacing:-.5px}
 #view-profile .stats{gap:32px}#view-profile .stats strong{color:#211d30}
 @media(max-width:760px){body{background:#f7f8fc}.app{padding:14px 12px 94px}.top{margin:7px 3px 17px}.top h1{font-size:23px}.card{border-radius:19px;padding:17px}.post{padding:0}.video{max-height:64vh}.mobilebar{padding:8px 5px calc(8px + env(safe-area-inset-bottom))}.mobilebar button{font-size:23px}.status{font-size:11px;padding:7px 9px}.feed{max-width:560px}}
-</style></head>
+
+/* REELIX extended experience */
+:root{color-scheme:dark}
+body.light{--bg:#f6f4fc;--panel:#fff;--panel2:#eeeafd;--line:#ded8ef;--text:#211b32;--muted:#746b85;background:radial-gradient(ellipse at 50% -20%,#e7dcff 0,transparent 42%),var(--bg)}
+body.light .card{background:linear-gradient(145deg,#fff,#f8f6ff)}
+body.light .field{background:#fff;color:#211b32}
+body.light .bubble{background:#eeeafd;color:#211b32}
+body.light .bubble.mine{background:#7458e8;color:white}
+.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.setting-tile{padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--panel2)}
+.setting-tile b{display:block;margin-bottom:5px}
+.recorder-box{display:grid;gap:12px}
+.recorder-box video{width:100%;max-height:55vh;background:#050408;border-radius:16px}
+.progress-track{height:7px;background:var(--panel2);border-radius:99px;overflow:hidden}
+.progress-track span{display:block;height:100%;width:0;background:linear-gradient(90deg,#6d5dfc,#4f6ef7);transition:width .2s}
+.toast-stack{position:fixed;right:16px;bottom:90px;z-index:1000;display:grid;gap:8px;pointer-events:none}
+.toast{padding:12px 16px;background:var(--panel2);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 30px #0003;animation:toastIn .2s ease}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.video-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.video-tools button{padding:9px 12px;border-radius:11px;background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+.empty-state{padding:30px 18px;text-align:center;color:var(--muted)}
+#recordPreview{width:100%;max-height:60vh;object-fit:contain;background:#08060d;border-radius:16px}
+@media(max-width:700px){.settings-grid{grid-template-columns:1fr}.app{padding:12px}.toast-stack{bottom:82px;left:12px;right:12px}}
+\n</style></head>
 <body>
 <div class="app">
 <aside class="side"><div class="logo">reelix<span>.</span></div><nav class="nav" id="nav">
@@ -48,7 +71,25 @@ body{background:#f7f8fc;color:var(--text);font-family:Inter,-apple-system,BlinkM
 <nav class="mobilebar" id="mobileNav"><button class="active" data-view="feed">⌂</button><button data-view="search">⌕</button><button data-view="create">＋</button><button data-view="inbox">✉</button><button data-view="profile">◉</button></nav>
 <div id="authModal" class="modal hidden"><div class="modalbox"><div class="row"><h2 class="grow" id="authTitle">Войти в Reelix</h2><button class="iconbtn" id="closeAuth">×</button></div><div class="tabs"><button class="active" id="loginTab">Вход</button><button id="registerTab">Регистрация</button></div><form id="authForm"><div id="registerFields" class="hidden"><label class="muted">Почта</label><input class="field" id="regEmail" type="email" autocomplete="email"><label class="muted">Имя профиля</label><input class="field" id="regDisplay" maxlength="40"><label class="muted">Ник (латиница, цифры, _)</label><input class="field" id="regUsername" maxlength="24" autocomplete="username"></div><label class="muted">Логин или почта</label><input class="field" id="loginName" autocomplete="username"><label class="muted">Пароль</label><input class="field" id="password" type="password" autocomplete="current-password"><button class="btn" style="width:100%" id="authSubmit">Войти</button></form><p class="footnote">Для регистрации пароль должен содержать минимум 10 символов.</p></div></div>
 <div id="commentsModal" class="modal hidden"><div class="modalbox"><div class="row"><h2 class="grow">Комментарии</h2><button class="iconbtn" id="closeComments">×</button></div><div id="commentsList" class="list"></div><div class="row" style="margin-top:14px"><input id="commentInput" class="field grow" placeholder="Написать комментарий"><button class="btn" id="sendComment">➤</button></div></div></div>
-<script>
+
+<section class="view" id="view-settings">
+  <div class="card"><h2>Настройки REELIX</h2><p class="muted">Настрой приложение под себя.</p>
+    <div class="settings-grid">
+      <div class="setting-tile"><b>Оформление</b><span class="muted">Светлая или тёмная тема</span><p><button class="btn secondary" id="themeToggle">Переключить тему</button></p></div>
+      <div class="setting-tile"><b>Автовоспроизведение</b><span class="muted">Видео в ленте</span><p><label><input type="checkbox" id="autoplaySetting"> Включить</label></p></div>
+      <div class="setting-tile"><b>Экономия трафика</b><span class="muted">Отключить предварительную загрузку</span><p><label><input type="checkbox" id="dataSaverSetting"> Включить</label></p></div>
+      <div class="setting-tile"><b>Локальные данные</b><span class="muted">Черновики и сохранённые публикации</span><p><button class="btn secondary" id="exportData">Экспортировать данные</button></p></div>
+    </div>
+  </div>
+  <div class="card"><h3>Подключение сервера</h3><p class="muted">Адрес API хранится только в этом браузере. Не вставляй сюда секретные ключи.</p>
+    <input class="field" id="apiUrlSetting" placeholder="https://api.example.com">
+    <button class="btn" id="saveApiUrl">Сохранить адрес API</button>
+  </div>
+  <div class="card"><h3>Аккаунт</h3><p class="muted">Токен авторизации хранится в localStorage этого браузера.</p><button class="btn danger" id="clearLocalData">Очистить локальные данные</button></div>
+</section>
+<section class="view" id="view-saved"><div class="card"><h2>Сохранённое</h2><p class="muted">Публикации, которые ты сохранил на этом устройстве.</p><div id="savedPosts" class="list"></div></div></section>
+<section class="view" id="view-recorder"><div class="card recorder-box"><h2>Запись видео</h2><p class="muted">Запись с камеры устройства. Браузер запросит разрешение.</p><video id="recordPreview" autoplay muted playsinline></video><div class="row"><button class="btn" id="startCamera">Включить камеру</button><button class="btn secondary" id="startRecording" disabled>● Запись</button><button class="btn danger" id="stopRecording" disabled>Остановить</button></div><div class="progress-track"><span id="recordProgress"></span></div><div class="muted" id="recordStatus">Камера выключена</div><button class="btn secondary" id="useRecording" disabled>Использовать это видео</button></div></section>
+\n<script>
 const API=(window.REELIX_API_URL||'').replace(/\\/$/,'')+'/api';
 let token=localStorage.getItem('reelix_token')||'', me=null, authMode='login', activeChat='', commentPost='';
 const $=id=>document.getElementById(id);
@@ -85,4 +126,44 @@ async function loadAdmin(){if(me?.role!=='ADMIN'){$('adminContent').textContent=
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-delete-post]');if(b&&confirm('Удалить публикацию?'))try{await api('/admin/posts/'+b.dataset.deletePost,{method:'DELETE'},true);b.parentElement.remove()}catch(err){say(err.message,'error')}});
 async function boot(){try{const h=await api('/health');$('apiStatus').textContent='● сервер онлайн';$('apiStatus').style.color='var(--good)'}catch(e){$('apiStatus').textContent='● сервер недоступен';$('apiStatus').style.color='var(--danger)'}if(token){try{me=await api('/users/me',{},true);setUser(me)}catch{token='';localStorage.removeItem('reelix_token');setUser(null)}}else setUser(null);loadFeed()}
 boot();
-</script></body></html>
+
+/* ===== REELIX client-side feature modules ===== */
+(function(){
+ 'use strict';
+ const KEY={theme:'reelix_theme',saved:'reelix_saved_posts',drafts:'reelix_drafts',autoplay:'reelix_autoplay',saver:'reelix_data_saver',api:'reelix_api_url'};
+ const read=(k,fallback)=>{try{const v=localStorage.getItem(k);return v===null?fallback:JSON.parse(v)}catch{return fallback}};
+ const write=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+ const notify=(message)=>{let stack=document.querySelector('.toast-stack');if(!stack){stack=document.createElement('div');stack.className='toast-stack';document.body.append(stack)}const item=document.createElement('div');item.className='toast';item.textContent=message;stack.append(item);setTimeout(()=>item.remove(),3200)};
+ const safeText=(v)=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+ const saved=()=>read(KEY.saved,[]);
+ function applyTheme(){document.body.classList.toggle('light',read(KEY.theme,'dark')==='light')}
+ function settingsInit(){
+  applyTheme();
+  const apiField=document.getElementById('apiUrlSetting');if(apiField)apiField.value=localStorage.getItem(KEY.api)||window.REELIX_API_URL||'';
+  const auto=document.getElementById('autoplaySetting');if(auto)auto.checked=read(KEY.autoplay,false);
+  const saver=document.getElementById('dataSaverSetting');if(saver)saver.checked=read(KEY.saver,false);
+ }
+ document.addEventListener('click',e=>{
+  if(e.target.id==='themeToggle'){write(KEY.theme,read(KEY.theme,'dark')==='dark'?'light':'dark');applyTheme();notify('Тема обновлена')}
+  if(e.target.id==='saveApiUrl'){const value=document.getElementById('apiUrlSetting').value.trim().replace(/\/$/,'');if(value&&!/^https?:\/\//i.test(value)){notify('Адрес должен начинаться с https:// или http://');return}localStorage.setItem(KEY.api,value);notify('Адрес API сохранён. Перезагрузи страницу для применения')}
+  if(e.target.id==='exportData'){const payload={saved:saved(),drafts:read(KEY.drafts,[]),exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='reelix-data.json';a.click();URL.revokeObjectURL(a.href);notify('Экспорт подготовлен')}
+  if(e.target.id==='clearLocalData'&&confirm('Очистить локальные настройки, черновики и токен?')){Object.values(KEY).forEach(k=>localStorage.removeItem(k));localStorage.removeItem('reelix_token');notify('Локальные данные очищены');setTimeout(()=>location.reload(),700)}
+  const saveBtn=e.target.closest('[data-save-post]');if(saveBtn){const id=saveBtn.dataset.savePost;const list=saved();const idx=list.findIndex(x=>String(x.id)===String(id));if(idx>=0){list.splice(idx,1);notify('Удалено из сохранённого')}else{const post=window.__reelixPostCache?.[id];list.unshift(post||{id,videoUrl:saveBtn.dataset.url||'',caption:saveBtn.dataset.caption||''});notify('Сохранено на этом устройстве')}write(KEY.saved,list);renderSaved()}
+ });
+ document.addEventListener('change',e=>{if(e.target.id==='autoplaySetting')write(KEY.autoplay,e.target.checked);if(e.target.id==='dataSaverSetting')write(KEY.saver,e.target.checked)});
+ function renderSaved(){const host=document.getElementById('savedPosts');if(!host)return;const items=saved();host.innerHTML=items.length?items.map(p=>'<div class="person"><div class="grow"><b>'+safeText(p.caption||'Сохранённое видео')+'</b><div class="muted">'+safeText(p.videoUrl||'Ссылка недоступна')+'</div></div><button class="btn secondary" data-remove-saved="'+safeText(p.id)+'">Убрать</button></div>').join(''):'<div class="empty-state">Здесь пока ничего нет.</div>'}
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-remove-saved]');if(!b)return;write(KEY.saved,saved().filter(x=>String(x.id)!==String(b.dataset.removeSaved)));renderSaved()});
+ const oldPostCard=window.postCard;
+ if(typeof oldPostCard==='function'&&!window.__reelixCardExtended){window.__reelixCardExtended=true;window.postCard=function(p){window.__reelixPostCache=window.__reelixPostCache||{};window.__reelixPostCache[p.id]=p;return oldPostCard(p).replace('<div class="caption">','<div class="video-tools"><button data-save-post="'+safeText(p.id)+'" data-url="'+safeText(p.videoUrl)+'" data-caption="'+safeText(p.caption||'')+'">☆ Сохранить</button></div><div class="caption">')}}
+ const oldShowView=window.showView;
+ if(typeof oldShowView==='function'&&!window.__reelixViewExtended){window.__reelixViewExtended=true;window.showView=function(name){oldShowView(name);if(name==='saved')renderSaved();if(name==='settings')settingsInit()}}
+ /* Keep the original upload route, but support unsigned Cloudinary when explicitly configured. */
+ const publish=document.getElementById('publishBtn');
+ if(publish)publish.title='Для публикации требуется API Reelix с endpoint /media/signature и /posts';
+ /* Accessibility and small-screen behavior */
+ document.querySelectorAll('button').forEach((b,i)=>{if(!b.getAttribute('aria-label')&&!b.textContent.trim())b.setAttribute('aria-label','Кнопка '+(i+1))});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal:not(.hidden)').forEach(m=>m.classList.add('hidden'))}});
+ settingsInit();renderSaved();
+ window.REELIX_LOCAL={notify,renderSaved,read,write,keys:KEY};
+})();
+\n</script></body></html>
