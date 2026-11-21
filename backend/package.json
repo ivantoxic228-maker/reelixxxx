@@ -5,9 +5,9 @@
   "description": "Reelix backend API",
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.json",
-    "start": "node dist/main.js",
+    "start": "prisma migrate deploy && node dist/main.js",
     "start:dev": "nest start --watch",
-    "start:prod": "prisma migrate deploy && node dist/main.js",
+    "start:prod": "npm run start",
     "lint": "eslint \"src/**/*.ts\"",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
