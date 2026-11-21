@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, RefreshControl, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { VideoView, useVideoPlayer } from "expo-video";
+import { router } from "expo-router";
 import { colors } from "../../src/theme";
 import { apiRequest } from "../../src/api";
 
@@ -41,7 +42,7 @@ function VideoCard({ post }: { post: Post }) {
             <Ionicons name={liked ? "heart" : "heart-outline"} size={29} color={liked ? "#FF5277" : "#fff"} />
             <Text style={styles.count}>{likes}</Text>
           </Pressable>
-          <View style={styles.action}><Ionicons name="chatbubble-ellipses-outline" size={25} color="#fff" /><Text style={styles.count}>{post._count.comments}</Text></View>
+          <Pressable style={styles.action} onPress={() => router.push(`/posts/${post.id}/comments`)} accessibilityRole="button" accessibilityLabel="Открыть комментарии"><Ionicons name="chatbubble-ellipses-outline" size={25} color="#fff" /><Text style={styles.count}>{post._count.comments}</Text></Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Поделиться видео" onPress={() => Alert.alert("Поделиться", "Ссылки на публикации появятся после добавления публичных ссылок Reelix.")}>
             <Ionicons name="share-social-outline" size={24} color="#fff" />
           </Pressable>
