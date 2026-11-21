@@ -1,7 +1,8 @@
 import { Controller, Post, UseGuards } from '@nestjs/common';
 import { MediaService } from './media.service';
-// TODO: protect this endpoint with the real Reelix access-token guard before public launch.
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @Controller('media')
+@UseGuards(JwtAuthGuard)
 export class MediaController {
   constructor(private readonly media: MediaService) {}
   @Post('signature')
