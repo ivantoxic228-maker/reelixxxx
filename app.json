@@ -31,6 +31,11 @@
         "CAMERA",
         "RECORD_AUDIO"
       ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "451729a2-1c42-496e-a190-137e26d72300"
+      }
     }
   }
 }
