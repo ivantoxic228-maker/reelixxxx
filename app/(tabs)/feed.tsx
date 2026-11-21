@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, RefreshControl } from "react-native";
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, RefreshControl, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { colors } from "../../src/theme";
@@ -8,6 +8,26 @@ import { apiRequest } from "../../src/api";
 type Post = { id: string; caption: string; videoUrl: string; user: { username: string; displayName: string; avatarUrl?: string | null }; _count: { likes: number; comments: number } };
 function VideoCard({ post }: { post: Post }) {
   const player = useVideoPlayer(post.videoUrl, p => { p.loop = true; p.play(); });
+  const [liked, setLiked] = useState(false);
+  const [likes, setLikes] = useState(post._count.likes);
+  const [liking, setLiking] = useState(false);
+  async function toggleLike() {
+    if (liking) return;
+    const previousLiked = liked;
+    const previousLikes = likes;
+    setLiked(!previousLiked);
+    setLikes(Math.max(0, previousLikes + (previousLiked ? -1 : 1)));
+    setLiking(true);
+    try {
+      const result = await apiRequest<{ liked: boolean }>(`/posts/${post.id}/like`, { method: "POST" }, true);
+      setLiked(result.liked);
+      setLikes(Math.max(0, post._count.likes + (result.liked ? 1 : -1)));
+    } catch (error) {
+      setLiked(previousLiked);
+      setLikes(previousLikes);
+      Alert.alert("Нужен вход", error instanceof Error ? error.message : "Войди в аккаунт, чтобы поставить лайк.");
+    } finally { setLiking(false); }
+  }
   return (
     <View style={styles.card}>
       <VideoView player={player} style={styles.video} contentFit="cover" nativeControls={false} allowsFullscreen />
@@ -17,9 +37,14 @@ function VideoCard({ post }: { post: Post }) {
           {!!post.caption && <Text style={styles.caption}>{post.caption}</Text>}
         </View>
         <View style={styles.actions}>
-          <View style={styles.action}><Ionicons name="heart-outline" size={27} color="#fff" /><Text style={styles.count}>{post._count.likes}</Text></View>
+          <Pressable style={styles.action} onPress={toggleLike} disabled={liking} accessibilityRole="button" accessibilityLabel={liked ? "Убрать лайк" : "Поставить лайк"}>
+            <Ionicons name={liked ? "heart" : "heart-outline"} size={29} color={liked ? "#FF5277" : "#fff"} />
+            <Text style={styles.count}>{likes}</Text>
+          </Pressable>
           <View style={styles.action}><Ionicons name="chatbubble-ellipses-outline" size={25} color="#fff" /><Text style={styles.count}>{post._count.comments}</Text></View>
-          <Ionicons name="share-social-outline" size={24} color="#fff" />
+          <Pressable accessibilityRole="button" accessibilityLabel="Поделиться видео" onPress={() => Alert.alert("Поделиться", "Ссылки на публикации появятся после добавления публичных ссылок Reelix.")}>
+            <Ionicons name="share-social-outline" size={24} color="#fff" />
+          </Pressable>
         </View>
       </View>
     </View>
@@ -30,7 +55,7 @@ export default function FeedScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const load = useCallback(async (refresh = false) => {
+  const load = useCallback(async () => {
     try {
       setError("");
       const data = await apiRequest<{ items: Post[] }>("/posts/feed");
@@ -43,8 +68,8 @@ export default function FeedScreen() {
   return (
     <View style={styles.screen}>
       <View style={styles.header}><Text style={styles.wordmark}>reelix<Text style={styles.dot}>.</Text></Text><Ionicons name="paper-plane-outline" size={23} color={colors.text} /></View>
-      {!!error && <View style={styles.notice}><Text style={styles.noticeText}>{error}</Text><Pressable onPress={() => load()}><Text style={styles.retry}>Повторить</Text></Pressable></View>}
-      <FlatList data={posts} keyExtractor={item => item.id} renderItem={({ item }) => <VideoCard post={item} />} pagingEnabled showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(true); }} />} ListEmptyComponent={<View style={styles.center}><Ionicons name="videocam-outline" size={38} color={colors.violet} /><Text style={styles.emptyTitle}>Пока нет видео</Text><Text style={styles.muted}>Опубликуй первый ролик — он появится здесь.</Text></View>} />
+      {!!error && <View style={styles.notice}><Text style={styles.noticeText}>{error}</Text><Pressable onPress={load}><Text style={styles.retry}>Повторить</Text></Pressable></View>}
+      <FlatList data={posts} keyExtractor={item => item.id} renderItem={({ item }) => <VideoCard post={item} />} pagingEnabled showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />} ListEmptyComponent={<View style={styles.center}><Ionicons name="videocam-outline" size={38} color={colors.violet} /><Text style={styles.emptyTitle}>Пока нет видео</Text><Text style={styles.muted}>Опубликуй первый ролик — он появится здесь.</Text></View>} />
     </View>
   );
 }
