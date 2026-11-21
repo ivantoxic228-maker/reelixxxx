@@ -16,6 +16,8 @@ export class UsersController {
   @Get('me') me(@CurrentUser() user: { sub: string }) { return this.users.me(user.sub); }
   @UseGuards(JwtAuthGuard)
   @Patch('me') updateMe(@CurrentUser() user: { sub: string }, @Body() body: UpdateProfileDto) { return this.users.updateMe(user.sub, body); }
+  @UseGuards(JwtAuthGuard)
+  @Get('me/posts') myPosts(@CurrentUser() user: { sub: string }) { return this.users.myPosts(user.sub); }
   @Get('search') search(@Query('q') q = '') { return q.trim().length < 2 ? [] : this.users.search(q.trim()); }
   @Get(':username') profile(@Param('username') username: string) { return this.users.profile(username); }
   @UseGuards(JwtAuthGuard)
