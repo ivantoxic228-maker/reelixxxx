@@ -31,6 +31,7 @@ export default function CreateScreen() {
   const [filter, setFilter] = useState<"none" | "vivid" | "mono">("none");
   const [sounds, setSounds] = useState<Sound[]>([]);
   const [soundId, setSoundId] = useState("");
+  const [soundVolume, setSoundVolume] = useState("50");
   const selectedSound = sounds.find(s => s.id === soundId);
   const audioPlayer = useAudioPlayer(selectedSound?.audioUrl);
   const [showSounds, setShowSounds] = useState(false);
@@ -67,9 +68,9 @@ export default function CreateScreen() {
       const uploaded = await uploadVideo({ uri, fileName: "reelix-clip.mp4", mimeType: "video/mp4" });
       const safeEnd = uploaded.duration ? Math.min(end, uploaded.duration) : end;
       if (safeEnd <= start) throw new Error("Время обрезки выходит за длительность видео.");
-      const videoUrl = buildEditedVideoUrl(uploaded, { trimStart: start, trimEnd: safeEnd, filter, overlayText, soundPublicId: sounds.find(s => s.id === soundId)?.publicId || undefined });
+      const videoUrl = buildEditedVideoUrl(uploaded, { trimStart: start, trimEnd: safeEnd, filter, overlayText, soundPublicId: sounds.find(s => s.id === soundId)?.publicId || undefined, soundVolume: Number(soundVolume) || 50 });
       await apiRequest("/posts", { method: "POST", body: JSON.stringify({ videoUrl, publicId: uploaded.public_id, duration: Math.max(0.2, safeEnd - start), caption, soundId: soundId || undefined }) }, true);
-      setUri(""); setCaption(""); setOverlayText(""); setSoundId(""); setDuration(0); setTrimStart("0"); setTrimEnd("");
+      setUri(""); setCaption(""); setOverlayText(""); setSoundId(""); setSoundVolume("50"); setDuration(0); setTrimStart("0"); setTrimEnd("");
       Alert.alert("Опубликовано", "Видео добавлено в Reelix.");
     } catch (e) { Alert.alert("Не удалось опубликовать", e instanceof Error ? e.message : "Попробуй позже."); }
     finally { setBusy(false); }
@@ -101,6 +102,7 @@ export default function CreateScreen() {
         <Text style={styles.label}>ЗВУКОВАЯ БИБЛИОТЕКА</Text>
         <Pressable style={styles.soundPicker} onPress={() => setShowSounds(v => !v)}><Ionicons name="musical-notes-outline" size={20} color={colors.violet}/><Text style={styles.soundText}>{sounds.find(s => s.id === soundId)?.title || "Выбрать звук"}</Text><Ionicons name={showSounds ? "chevron-up" : "chevron-down"} size={18} color={colors.muted}/></Pressable>
         {showSounds && <View style={styles.soundList}>{sounds.map(s => <SoundRow key={s.id} sound={s} selected={soundId===s.id} onSelect={() => { if (soundId === s.id) { audioPlayer.pause(); setSoundId(""); } else setSoundId(s.id); }} />)}{!sounds.length && <Text style={styles.hint}>Библиотека пока пуста. Администратор может добавить лицензированные треки.</Text>}</View>}
+        {!!soundId && <><Text style={styles.label}>ГРОМКОСТЬ МУЗЫКИ · 0–100%</Text><TextInput style={styles.input} value={soundVolume} onChangeText={value => setSoundVolume(value.replace(/[^0-9]/g, "").slice(0, 3))} keyboardType="number-pad" placeholder="50" placeholderTextColor={colors.muted}/></>}
         <Text style={styles.label}>ОПИСАНИЕ</Text><TextInput style={[styles.input,styles.caption]} value={caption} onChangeText={setCaption} multiline maxLength={2200} placeholder="Расскажи о своём видео..." placeholderTextColor={colors.muted}/>
         <Pressable style={styles.publish} onPress={publish} disabled={busy}>{busy?<ActivityIndicator color="#fff"/>:<Text style={styles.primaryText}>Опубликовать видео</Text>}</Pressable>
         <Text style={styles.hint}>Обрезка, фильтр и надпись применяются при обработке видео на Cloudinary. Выбранный трек прослушивается в редакторе и добавляется поверх оригинального звука при обработке Cloudinary.</Text>
