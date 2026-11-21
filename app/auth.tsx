@@ -6,7 +6,7 @@ import * as SecureStore from "expo-secure-store";
 import { colors } from "../src/theme";
 import { apiRequest } from "../src/api";
 
-type AuthResult = { accessToken: string; user: { id: string; username: string; displayName: string } };
+type AuthResult = { accessToken?: unknown; user: { id: string; username: string; displayName: string } };
 
 export default function AuthScreen() {
   const [mode, setMode] = useState<"login" | "register">("register");
@@ -28,7 +28,11 @@ export default function AuthScreen() {
           ? { email: email.trim(), username: name.trim().toLowerCase(), displayName: name.trim(), password }
           : { login: email.trim(), password }),
       });
-      await SecureStore.setItemAsync("reelix_access_token", result.accessToken);
+      const token = typeof result?.accessToken === "string" ? result.accessToken : "";
+      if (!token.trim()) {
+        throw new Error("Сервер не вернул токен входа. Проверь, что Backend запущен и обновлён.");
+      }
+      await SecureStore.setItemAsync("reelix_access_token", token);
       router.replace("/(tabs)/feed");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не удалось войти. Попробуй ещё раз.");
