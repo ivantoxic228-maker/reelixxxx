@@ -18,8 +18,9 @@ export class PostsService {
     return { success: true };
   }
   async toggleLike(userId: string, postId: string) {
-    const post = await this.db.post.findUnique({ where: { id: postId } });
+    const post = await this.db.post.findUnique({ where: { id: postId }, include: { user: { select: { isPrivate: true } } } });
     if (!post) throw new NotFoundException('Публикация не найдена');
+    if (post.user.isPrivate) throw new ForbiddenException('Публикация закрытого аккаунта недоступна');
     const where = { userId_postId: { userId, postId } };
     const existing = await this.db.like.findUnique({ where });
     if (existing) { await this.db.like.delete({ where }); return { liked: false }; }
@@ -27,10 +28,15 @@ export class PostsService {
     return { liked: true };
   }
   async comment(userId: string, postId: string, text: string) {
-    if (!(await this.db.post.findUnique({ where: { id: postId } }))) throw new NotFoundException('Публикация не найдена');
+    const post = await this.db.post.findUnique({ where: { id: postId }, include: { user: { select: { isPrivate: true } } } });
+    if (!post) throw new NotFoundException('Публикация не найдена');
+    if (post.user.isPrivate) throw new ForbiddenException('Публикация закрытого аккаунта недоступна');
     return this.db.comment.create({ data: { userId, postId, text }, include: { user: { select: { username: true, displayName: true, avatarUrl: true } } } });
   }
-  comments(postId: string) {
+  async comments(postId: string) {
+    const post = await this.db.post.findUnique({ where: { id: postId }, select: { user: { select: { isPrivate: true } } } });
+    if (!post) throw new NotFoundException('Публикация не найдена');
+    if (post.user.isPrivate) throw new ForbiddenException('Публикация закрытого аккаунта недоступна');
     return this.db.comment.findMany({ where: { postId }, orderBy: { createdAt: 'asc' }, take: 100, include: { user: { select: { username: true, displayName: true, avatarUrl: true } } } });
   }
 }
