@@ -56,6 +56,7 @@ model Sound {
   title     String
   artist    String
   audioUrl  String
+  publicId  String?
   coverUrl  String?
   duration  Float?
   source    String   @default("creator")
