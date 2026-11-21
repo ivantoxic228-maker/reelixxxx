@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, RefreshControl, Alert } from "react-native";
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, Pressable, RefreshControl, Alert, Share } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { router } from "expo-router";
 import { colors } from "../../src/theme";
 import { apiRequest } from "../../src/api";
 
-type Post = { id: string; caption: string; videoUrl: string; user: { username: string; displayName: string; avatarUrl?: string | null }; _count: { likes: number; comments: number } };
+type Post = { id: string; caption: string; videoUrl: string; user: { username: string; displayName: string; avatarUrl?: string | null; isVerified?: boolean }; _count: { likes: number; comments: number } };
 function VideoCard({ post }: { post: Post }) {
   const player = useVideoPlayer(post.videoUrl, p => { p.loop = true; p.play(); });
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post._count.likes);
   const [liking, setLiking] = useState(false);
+  useEffect(() => { apiRequest(`/posts/${post.id}/view`, { method: "POST", body: JSON.stringify({ watchMs: 0 }) }, true).catch(() => undefined); }, [post.id]);
   async function toggleLike() {
     if (liking) return;
     const previousLiked = liked;
@@ -34,7 +35,7 @@ function VideoCard({ post }: { post: Post }) {
       <VideoView player={player} style={styles.video} contentFit="cover" nativeControls={false} allowsFullscreen />
       <View style={styles.overlay}>
         <View style={styles.info}>
-          <Text style={styles.username}>@{post.user.username}</Text>
+          <Text style={styles.username}>@{post.user.username}{post.user.isVerified ? "  ✓" : ""}</Text>
           {!!post.caption && <Text style={styles.caption}>{post.caption}</Text>}
         </View>
         <View style={styles.actions}>
@@ -43,7 +44,7 @@ function VideoCard({ post }: { post: Post }) {
             <Text style={styles.count}>{likes}</Text>
           </Pressable>
           <Pressable style={styles.action} onPress={() => router.push(`/posts/${post.id}/comments`)} accessibilityRole="button" accessibilityLabel="Открыть комментарии"><Ionicons name="chatbubble-ellipses-outline" size={25} color="#fff" /><Text style={styles.count}>{post._count.comments}</Text></Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel="Поделиться видео" onPress={() => Alert.alert("Поделиться", "Ссылки на публикации появятся после добавления публичных ссылок Reelix.")}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Поделиться видео" onPress={() => Share.share({ message: `Видео в Reelix: ${post.videoUrl}` })}>
             <Ionicons name="share-social-outline" size={24} color="#fff" />
           </Pressable>
         </View>
@@ -59,7 +60,9 @@ export default function FeedScreen() {
   const load = useCallback(async () => {
     try {
       setError("");
-      const data = await apiRequest<{ items: Post[] }>("/posts/feed");
+      let data: { items: Post[] };
+      try { data = await apiRequest<{ items: Post[] }>("/posts/recommended", {}, true); }
+      catch { data = await apiRequest<{ items: Post[] }>("/posts/feed"); }
       setPosts(data.items);
     } catch (e) { setError(e instanceof Error ? e.message : "Не удалось загрузить ленту"); }
     finally { setLoading(false); setRefreshing(false); }
