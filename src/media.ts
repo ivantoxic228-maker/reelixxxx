@@ -28,7 +28,7 @@ export function buildEditedVideoUrl(upload: UploadResult, options: { trimStart: 
   if (options.filter === "mono") transformations.push("e_grayscale");
   if (options.trimStart > 0 || options.trimEnd < (upload.duration || options.trimEnd)) transformations.push(`so_${Math.max(0, options.trimStart)},eo_${Math.max(options.trimStart + 0.2, options.trimEnd)}`);
   if (options.overlayText.trim()) transformations.push(`l_text:Arial_48_bold:${encodeURIComponent(options.overlayText.trim())},co_white/fl_layer_apply,g_south,y_100`);
-  if (options.soundPublicId) transformations.push(`l_audio:${options.soundPublicId.replace(/\\//g, ":")}/e_volume:50/fl_layer_apply`);
+  if (options.soundPublicId) transformations.push(`l_audio:${options.soundPublicId.split("/").join(":")}/e_volume:50/fl_layer_apply`);
   if (!transformations.length) return upload.secure_url;
   const publicId = upload.public_id.split("/").map(encodeURIComponent).join("/");
   return `https://res.cloudinary.com/${upload.cloudName}/video/upload/${transformations.join("/")}/${publicId}.${upload.format || "mp4"}`;
