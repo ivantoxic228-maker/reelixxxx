@@ -2,12 +2,20 @@ import { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { useAudioPlayer } from "expo-audio";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { colors } from "../../src/theme";
 import { pickVideo, uploadVideo, buildEditedVideoUrl } from "../../src/media";
 import { apiRequest } from "../../src/api";
 
-type Sound = { id: string; title: string; artist: string; audioUrl: string; duration?: number };
+type Sound = { id: string; title: string; artist: string; audioUrl: string; publicId?: string | null; duration?: number };
+function SoundRow({ sound, selected, onSelect }: { sound: Sound; selected: boolean; onSelect: () => void }) {
+  const player = useAudioPlayer(sound.audioUrl);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => { if (!selected && playing) { player.pause(); setPlaying(false); } }, [selected, playing, player]);
+  function toggle() { onSelect(); if (playing) { player.pause(); setPlaying(false); } else { player.play(); setPlaying(true); } }
+  return <Pressable style={styles.soundRow} onPress={toggle}><View style={{flex:1}}><Text style={styles.soundName}>{sound.title}</Text><Text style={styles.soundArtist}>{sound.artist}</Text></View><Ionicons name={selected && playing ? "pause-circle" : selected ? "checkmark-circle" : "play-circle-outline"} size={23} color={colors.violet}/></Pressable>;
+}
 function VideoPreview({ uri }: { uri: string }) {
   const player = useVideoPlayer(uri, p => { p.loop = true; });
   return <VideoView player={player} style={styles.preview} contentFit="contain" nativeControls />;
@@ -53,7 +61,7 @@ export default function CreateScreen() {
     setBusy(true);
     try {
       const uploaded = await uploadVideo({ uri, fileName: "reelix-clip.mp4", mimeType: "video/mp4" });
-      const videoUrl = buildEditedVideoUrl(uploaded, { trimStart: start, trimEnd: end, filter, overlayText });
+      const videoUrl = buildEditedVideoUrl(uploaded, { trimStart: start, trimEnd: end, filter, overlayText, soundPublicId: sounds.find(s => s.id === soundId)?.publicId || undefined });
       await apiRequest("/posts", { method: "POST", body: JSON.stringify({ videoUrl, publicId: uploaded.public_id, duration: Math.max(0.2, end - start), caption, soundId: soundId || undefined }) }, true);
       setUri(""); setCaption(""); setOverlayText(""); setSoundId(""); setDuration(0); setTrimStart("0"); setTrimEnd("");
       Alert.alert("Опубликовано", "Видео добавлено в Reelix.");
@@ -86,10 +94,10 @@ export default function CreateScreen() {
         <Text style={styles.label}>ТЕКСТ НА ВИДЕО</Text><TextInput style={styles.input} value={overlayText} onChangeText={setOverlayText} maxLength={60} placeholder="Добавь надпись на ролик" placeholderTextColor={colors.muted}/>
         <Text style={styles.label}>ЗВУКОВАЯ БИБЛИОТЕКА</Text>
         <Pressable style={styles.soundPicker} onPress={() => setShowSounds(v => !v)}><Ionicons name="musical-notes-outline" size={20} color={colors.violet}/><Text style={styles.soundText}>{sounds.find(s => s.id === soundId)?.title || "Выбрать звук"}</Text><Ionicons name={showSounds ? "chevron-up" : "chevron-down"} size={18} color={colors.muted}/></Pressable>
-        {showSounds && <View style={styles.soundList}>{sounds.map(s => <Pressable key={s.id} style={styles.soundRow} onPress={() => { setSoundId(s.id); setShowSounds(false); }}><View style={{flex:1}}><Text style={styles.soundName}>{s.title}</Text><Text style={styles.soundArtist}>{s.artist}</Text></View><Ionicons name={soundId===s.id ? "checkmark-circle" : "play-circle-outline"} size={22} color={colors.violet}/></Pressable>)}{!sounds.length && <Text style={styles.hint}>Библиотека пока пуста. Администратор может добавить лицензированные треки.</Text>}</View>}
+        {showSounds && <View style={styles.soundList}>{sounds.map(s => <SoundRow key={s.id} sound={s} selected={soundId===s.id} onSelect={() => setSoundId(s.id)} />)}{!sounds.length && <Text style={styles.hint}>Библиотека пока пуста. Администратор может добавить лицензированные треки.</Text>}</View>}
         <Text style={styles.label}>ОПИСАНИЕ</Text><TextInput style={[styles.input,styles.caption]} value={caption} onChangeText={setCaption} multiline maxLength={2200} placeholder="Расскажи о своём видео..." placeholderTextColor={colors.muted}/>
         <Pressable style={styles.publish} onPress={publish} disabled={busy}>{busy?<ActivityIndicator color="#fff"/>:<Text style={styles.primaryText}>Опубликовать видео</Text>}</Pressable>
-        <Text style={styles.hint}>Обрезка, фильтр и надпись применяются при обработке видео на Cloudinary. Выбранный трек сохраняется как звуковая дорожка публикации; сведение музыки с исходной аудиодорожкой ещё требует отдельного аудиомонтажного сервиса.</Text>
+        <Text style={styles.hint}>Обрезка, фильтр и надпись применяются при обработке видео на Cloudinary. Выбранный трек прослушивается в редакторе и добавляется поверх оригинального звука при обработке Cloudinary.</Text>
       </>}
     </ScrollView>
   );
