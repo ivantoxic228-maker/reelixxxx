@@ -12,7 +12,17 @@ function VideoCard({ post }: { post: Post }) {
   const [liked, setLiked] = useState(false);
   const [likes, setLikes] = useState(post._count.likes);
   const [liking, setLiking] = useState(false);
-  useEffect(() => { apiRequest(`/posts/${post.id}/view`, { method: "POST", body: JSON.stringify({ watchMs: 0 }) }, true).catch(() => undefined); }, [post.id]);
+  useEffect(() => {
+    player.timeUpdateEventInterval = 1;
+    let recorded = false;
+    const subscription = player.addListener("timeUpdate", ({ currentTime }) => {
+      if (!recorded && currentTime >= 1) {
+        recorded = true;
+        apiRequest(`/posts/${post.id}/view`, { method: "POST", body: JSON.stringify({ watchMs: Math.round(currentTime * 1000) }) }, true).catch(() => undefined);
+      }
+    });
+    return () => subscription.remove();
+  }, [player, post.id]);
   async function toggleLike() {
     if (liking) return;
     const previousLiked = liked;
