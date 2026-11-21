@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, TextInput, Pressable, ActivityIndicator, Alert, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
 import { useAudioPlayer } from "expo-audio";
 import { VideoView, useVideoPlayer } from "expo-video";
@@ -20,6 +21,7 @@ export default function CreateScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [microphonePermission, requestMicrophonePermission] = useMicrophonePermissions();
   const camera = useRef<CameraView | null>(null);
+  const [cameraActive, setCameraActive] = useState(false);
   const [facing, setFacing] = useState<"front" | "back">("back");
   const [recording, setRecording] = useState(false);
   const [uri, setUri] = useState("");
@@ -36,6 +38,7 @@ export default function CreateScreen() {
   const audioPlayer = useAudioPlayer(selectedSound?.audioUrl);
   const [showSounds, setShowSounds] = useState(false);
   const [busy, setBusy] = useState(false);
+  useFocusEffect(useCallback(() => { setCameraActive(true); return () => { setCameraActive(false); camera.current?.stopRecording(); }; }, []));
   useEffect(() => { apiRequest<Sound[]>("/posts/sounds").then(setSounds).catch(() => setSounds([])); }, []);
   useEffect(() => { if (selectedSound) audioPlayer.play(); else audioPlayer.pause(); return () => audioPlayer.pause(); }, [soundId]);
   async function choose() {
@@ -82,7 +85,7 @@ export default function CreateScreen() {
       <View style={styles.header}><Text style={styles.title}>Создать видео</Text><Text style={styles.brand}>REELIX STUDIO</Text></View>
       {!uri ? <>
         <View style={styles.cameraFrame}>
-          <CameraView ref={camera} style={StyleSheet.absoluteFill} facing={facing} mode="video" videoQuality="1080p" />
+          {cameraActive && <CameraView ref={camera} style={StyleSheet.absoluteFill} facing={facing} mode="video" videoQuality="1080p" /> }
           <Pressable style={styles.flip} onPress={() => setFacing(v => v === "back" ? "front" : "back")}><Ionicons name="camera-reverse-outline" size={23} color="#fff"/></Pressable>
           <View style={styles.cameraControls}>
             <Pressable style={styles.gallery} onPress={choose}><Ionicons name="images-outline" size={23} color="#fff"/><Text style={styles.controlText}>Галерея</Text></Pressable>
