@@ -8,7 +8,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = app.get(ConfigService);
   const origins = (config.get<string>('CORS_ORIGINS') ?? '').split(',').map(v => v.trim()).filter(Boolean);
-  const corsOrigin = origins.includes('*') ? '*' : origins.length ? origins : false;
+  const corsOrigin = origins.includes('*') ? '*' : origins.length ? origins : '*' ;
   app.enableCors({ origin: corsOrigin, credentials: false });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   app.setGlobalPrefix('api');
