@@ -22,12 +22,13 @@ export async function uploadVideo(asset: { uri: string; fileName?: string | null
   if (!response.ok) throw new Error(result.error?.message || "Не удалось загрузить видео");
   return { ...result, cloudName: sign.cloudName } as UploadResult;
 }
-export function buildEditedVideoUrl(upload: UploadResult, options: { trimStart: number; trimEnd: number; filter: "none" | "vivid" | "mono"; overlayText: string }) {
+export function buildEditedVideoUrl(upload: UploadResult, options: { trimStart: number; trimEnd: number; filter: "none" | "vivid" | "mono"; overlayText: string; soundPublicId?: string }) {
   const transformations: string[] = [];
   if (options.filter === "vivid") transformations.push("e_saturation:35,e_contrast:10");
   if (options.filter === "mono") transformations.push("e_grayscale");
   if (options.trimStart > 0 || options.trimEnd < (upload.duration || options.trimEnd)) transformations.push(`so_${Math.max(0, options.trimStart)},eo_${Math.max(options.trimStart + 0.2, options.trimEnd)}`);
   if (options.overlayText.trim()) transformations.push(`l_text:Arial_48_bold:${encodeURIComponent(options.overlayText.trim())},co_white/fl_layer_apply,g_south,y_100`);
+  if (options.soundPublicId) transformations.push(`l_audio:${options.soundPublicId.replace(/\\//g, ":")}/e_volume:50/fl_layer_apply`);
   if (!transformations.length) return upload.secure_url;
   const publicId = upload.public_id.split("/").map(encodeURIComponent).join("/");
   return `https://res.cloudinary.com/${upload.cloudName}/video/upload/${transformations.join("/")}/${publicId}.${upload.format || "mp4"}`;
