@@ -24,6 +24,7 @@ export default function SettingsScreen() {
       <SettingRow icon="person-circle-outline" title="Данные профиля" detail="Имя и описание профиля" onPress={() => router.push("/edit-profile")} />
       <SettingRow icon="lock-closed-outline" title="Приватность" detail="Управление закрытым аккаунтом" onPress={() => router.push("/edit-profile")} />
       <SettingRow icon="shield-checkmark-outline" title="Безопасность" detail="Пароль и защита аккаунта" />
+      <SettingRow icon="construct-outline" title="Панель администратора" detail="Модерация видео и подтверждение профилей" onPress={() => router.push("/admin")} />
       <SettingRow icon="checkmark-circle-outline" title="Верификация" detail="Подтверждение подлинности профиля" />
       <Text style={styles.section}>ПРИЛОЖЕНИЕ</Text>
       <SettingRow icon="notifications-outline" title="Уведомления" detail="Настройка push-уведомлений" />
