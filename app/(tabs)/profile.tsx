@@ -5,7 +5,7 @@ import { router, useFocusEffect } from "expo-router";
 import { colors } from "../../src/theme";
 import { apiRequest } from "../../src/api";
 
-type Me = { username: string; displayName: string; bio: string; avatarUrl?: string | null; isPrivate: boolean; _count: { posts: number; followers: number; following: number } };
+type Me = { username: string; displayName: string; bio: string; avatarUrl?: string | null; isPrivate: boolean; isVerified?: boolean; _count: { posts: number; followers: number; following: number } };
 export default function ProfileScreen() {
   const [me, setMe] = useState<Me | null>(null);
   const [loading, setLoading] = useState(true);
@@ -24,10 +24,11 @@ export default function ProfileScreen() {
       <View style={styles.top}><Text style={styles.title}>Профиль</Text><Pressable onPress={() => router.push("/settings")}><Ionicons name="settings-outline" size={23} color={colors.text} /></Pressable></View>
       <View style={styles.profile}>
         <View style={styles.avatar}><Text style={styles.avatarText}>{(me.displayName || me.username).slice(0,1).toUpperCase()}</Text></View>
-        <Text style={styles.heading}>{me.displayName}</Text><Text style={styles.handle}>@{me.username}</Text>
+        <Text style={styles.heading}>{me.displayName}{me.isVerified ? "  ✓" : ""}</Text><Text style={styles.handle}>@{me.username}</Text>
         {!!me.bio && <Text style={styles.copy}>{me.bio}</Text>}
         <View style={styles.stats}><View style={styles.stat}><Text style={styles.statValue}>{me._count.posts}</Text><Text style={styles.statLabel}>видео</Text></View><View style={styles.stat}><Text style={styles.statValue}>{me._count.followers}</Text><Text style={styles.statLabel}>подписчики</Text></View><View style={styles.stat}><Text style={styles.statValue}>{me._count.following}</Text><Text style={styles.statLabel}>подписки</Text></View></View>
         <Pressable style={styles.edit} onPress={() => router.push("/edit-profile")}><Text style={styles.editText}>Редактировать профиль</Text></Pressable>
+        <Pressable style={styles.edit} onPress={() => router.push("/my-videos")}><Text style={styles.editText}>Мои видео · управлять публикациями</Text></Pressable>
         {me.isPrivate && <Text style={styles.private}> <Ionicons name="lock-closed" size={12} color={colors.violet} /> Закрытый аккаунт</Text>}
       </View>
       <View style={styles.empty}><Ionicons name="grid-outline" size={30} color={colors.violet} /><Text style={styles.copy}>Твои публикации будут отображаться здесь.</Text></View>
