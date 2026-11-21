@@ -23,6 +23,7 @@ export class UsersService {
     const target = await this.db.user.findUnique({ where: { username: username.toLowerCase() } });
     if (!target) throw new NotFoundException('Пользователь не найден');
     if (target.id === followerId) throw new BadRequestException('Нельзя подписаться на себя');
+    if (target.isPrivate) throw new BadRequestException('Закрытый аккаунт: заявки на подписку пока не поддерживаются');
     const key = { followerId_followingId: { followerId, followingId: target.id } };
     const exists = await this.db.follow.findUnique({ where: key });
     if (exists) { await this.db.follow.delete({ where: key }); return { following: false }; }
