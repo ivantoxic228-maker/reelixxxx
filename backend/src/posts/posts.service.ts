@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 export class PostsService {
   constructor(private db: PrismaService) {}
   async feed(cursor?: string) {
-    const rows = await this.db.post.findMany({ take: 12, ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}), orderBy: { createdAt: 'desc' }, include: { user: { select: { id: true, username: true, displayName: true, avatarUrl: true } }, _count: { select: { likes: true, comments: true } } } });
+    const rows = await this.db.post.findMany({ take: 12, ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}), orderBy: { createdAt: 'desc' }, where: { user: { isPrivate: false } }, include: { user: { select: { id: true, username: true, displayName: true, avatarUrl: true } }, _count: { select: { likes: true, comments: true } } } });
     return { items: rows, nextCursor: rows.length === 12 ? rows[rows.length - 1].id : null };
   }
   create(userId: string, input: { videoUrl: string; caption?: string; thumbnailUrl?: string; publicId?: string; duration?: number }) {
