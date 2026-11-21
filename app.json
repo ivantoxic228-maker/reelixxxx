@@ -7,9 +7,30 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "plugins": ["expo-router"],
-    "experiments": { "typedRoutes": true },
-    "ios": { "supportsTablet": true, "bundleIdentifier": "app.reelix.mobile" },
-    "android": { "package": "app.reelix.mobile", "edgeToEdgeEnabled": true }
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Разреши Reelix использовать камеру для съёмки видео.",
+          "microphonePermission": "Разреши Reelix использовать микрофон для записи звука."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.reelix.mobile"
+    },
+    "android": {
+      "package": "app.reelix.mobile",
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO"
+      ]
+    }
   }
 }
