@@ -8,7 +8,7 @@ import { apiRequest } from "../src/api";
 type Post = { id: string; caption: string; isFeatured: boolean; isHidden: boolean; views: number; user: { username: string; displayName: string; isVerified: boolean }; _count: { likes: number; comments: number } };
 type User = { id: string; username: string; displayName: string; isVerified: boolean; role: string };
 type Overview = { users: number; posts: number; hidden: number; featured: number; sounds: number };
-type Sound = { id: string; title: string; artist: string; audioUrl: string; isActive: boolean };
+type Sound = { id: string; title: string; artist: string; audioUrl: string; publicId?: string | null; isActive: boolean };
 export default function AdminScreen() {
   const [tab, setTab] = useState<"posts" | "users" | "sounds">("posts");
   const [posts, setPosts] = useState<Post[]>([]);
@@ -20,6 +20,7 @@ export default function AdminScreen() {
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
+  const [publicId, setPublicId] = useState("");
   const load = useCallback(async () => {
     try {
       const [o,p,u,s] = await Promise.all([
@@ -49,8 +50,8 @@ export default function AdminScreen() {
     finally { setBusyId(""); }
   }
   async function addSound() {
-    if (!title.trim() || !artist.trim() || !audioUrl.trim()) { Alert.alert("Заполни поля", "Нужны название, автор и ссылка на аудио."); return; }
-    try { await apiRequest("/admin/sounds", { method: "POST", body: JSON.stringify({ title: title.trim(), artist: artist.trim(), audioUrl: audioUrl.trim(), source: "licensed" }) }, true); setTitle(""); setArtist(""); setAudioUrl(""); await load(); Alert.alert("Готово", "Звук добавлен в библиотеку."); }
+    if (!title.trim() || !artist.trim() || !audioUrl.trim() || !publicId.trim()) { Alert.alert("Заполни поля", "Нужны название, автор, ссылка на аудио и Cloudinary Public ID."); return; }
+    try { await apiRequest("/admin/sounds", { method: "POST", body: JSON.stringify({ title: title.trim(), artist: artist.trim(), audioUrl: audioUrl.trim(), publicId: publicId.trim(), source: "licensed" }) }, true); setTitle(""); setArtist(""); setAudioUrl(""); setPublicId(""); await load(); Alert.alert("Готово", "Звук добавлен в библиотеку."); }
     catch (e) { Alert.alert("Ошибка", e instanceof Error ? e.message : "Не удалось добавить звук."); }
   }
   async function toggleSound(sound: Sound) {
@@ -65,7 +66,7 @@ export default function AdminScreen() {
       <View style={styles.tabs}>{(["posts","users","sounds"] as const).map(key => <Pressable key={key} onPress={() => setTab(key)} style={[styles.tab, tab === key && styles.tabActive]}><Text style={[styles.tabText, tab === key && styles.tabTextActive]}>{key === "posts" ? "Видео" : key === "users" ? "Профили" : "Звуки"}</Text></Pressable>)}</View>
       {tab === "posts" && <FlatList data={posts} keyExtractor={x => x.id} contentContainerStyle={styles.list} renderItem={({item}) => <View style={styles.card}><Text style={styles.cardTitle}>@{item.user.username} {item.user.isVerified ? "✓" : ""}</Text><Text style={styles.caption} numberOfLines={3}>{item.caption || "Без описания"}</Text><Text style={styles.meta}>{item.views} просмотров · {item._count.likes} лайков · {item._count.comments} комментариев</Text><View style={styles.actions}><Pressable style={styles.smallButton} onPress={() => moderate(item,{isFeatured:!item.isFeatured})} disabled={busyId===item.id}><Text style={styles.smallText}>{item.isFeatured ? "Убрать из топа" : "Поднять в топ"}</Text></Pressable><Pressable style={styles.smallButton} onPress={() => moderate(item,{isHidden:!item.isHidden})} disabled={busyId===item.id}><Text style={styles.smallText}>{item.isHidden ? "Показать" : "Скрыть"}</Text></Pressable><Pressable style={styles.deleteButton} onPress={() => remove(item)} disabled={busyId===item.id}><Ionicons name="trash-outline" color={colors.danger} size={17}/></Pressable></View></View>} ListEmptyComponent={<Text style={styles.empty}>Публикаций пока нет.</Text>} />}
       {tab === "users" && <FlatList data={users} keyExtractor={x => x.id} contentContainerStyle={styles.list} renderItem={({item}) => <View style={styles.userRow}><View style={{flex:1}}><Text style={styles.cardTitle}>{item.displayName} @{item.username}</Text><Text style={styles.meta}>{item.role}</Text></View><Pressable style={styles.smallButton} onPress={() => verify(item)} disabled={busyId===item.id}><Text style={styles.smallText}>{item.isVerified ? "Снять галочку" : "Выдать галочку"}</Text></Pressable></View>} />}
-      {tab === "sounds" && <FlatList data={sounds} keyExtractor={x => x.id} contentContainerStyle={styles.list} ListHeaderComponent={<View style={styles.card}><Text style={styles.cardTitle}>Добавить трек</Text><TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Название" placeholderTextColor={colors.muted}/><TextInput style={styles.input} value={artist} onChangeText={setArtist} placeholder="Исполнитель" placeholderTextColor={colors.muted}/><TextInput style={styles.input} value={audioUrl} onChangeText={setAudioUrl} placeholder="Ссылка на аудиофайл" placeholderTextColor={colors.muted} autoCapitalize="none"/><Pressable style={styles.addButton} onPress={addSound}><Text style={styles.addText}>Добавить звук</Text></Pressable><Text style={styles.meta}>Добавляй только аудио, на которое у Reelix есть права использования.</Text></View>} renderItem={({item}) => <View style={styles.userRow}><View style={{flex:1}}><Text style={styles.cardTitle}>{item.title}</Text><Text style={styles.meta}>{item.artist} · {item.isActive ? "В библиотеке" : "Скрыт"}</Text></View><Pressable style={styles.smallButton} onPress={() => toggleSound(item)}><Text style={styles.smallText}>{item.isActive ? "Скрыть" : "Включить"}</Text></Pressable></View>} />}
+      {tab === "sounds" && <FlatList data={sounds} keyExtractor={x => x.id} contentContainerStyle={styles.list} ListHeaderComponent={<View style={styles.card}><Text style={styles.cardTitle}>Добавить трек</Text><TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Название" placeholderTextColor={colors.muted}/><TextInput style={styles.input} value={artist} onChangeText={setArtist} placeholder="Исполнитель" placeholderTextColor={colors.muted}/><TextInput style={styles.input} value={audioUrl} onChangeText={setAudioUrl} placeholder="Ссылка на аудиофайл Cloudinary" placeholderTextColor={colors.muted} autoCapitalize="none"/><TextInput style={styles.input} value={publicId} onChangeText={setPublicId} placeholder="Cloudinary Public ID аудио" placeholderTextColor={colors.muted} autoCapitalize="none"/><Pressable style={styles.addButton} onPress={addSound}><Text style={styles.addText}>Добавить звук</Text></Pressable><Text style={styles.meta}>Добавляй только аудио, на которое у Reelix есть права использования.</Text></View>} renderItem={({item}) => <View style={styles.userRow}><View style={{flex:1}}><Text style={styles.cardTitle}>{item.title}</Text><Text style={styles.meta}>{item.artist} · {item.isActive ? "В библиотеке" : "Скрыт"}</Text></View><Pressable style={styles.smallButton} onPress={() => toggleSound(item)}><Text style={styles.smallText}>{item.isActive ? "Скрыть" : "Включить"}</Text></Pressable></View>} />}
     </View>
   );
 }
