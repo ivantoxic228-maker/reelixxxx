@@ -1,22 +1,36 @@
 # Reelix API
 
-NestJS API service for Reelix. This is an initial server foundation, not a production-ready backend yet.
+NestJS + Prisma + PostgreSQL backend foundation.
 
-## Security
-- Never commit `.env` or real credentials.
-- Set `DATABASE_URL`, `JWT_ACCESS_SECRET`, and Cloudinary credentials in the hosting provider's private environment settings.
-- The Cloudinary API secret stays on the server. The client receives only a short-lived upload signature.
-- Before public launch, protect `POST /api/media/signature` with authentication, add per-user rate limits and upload limits, and verify ownership of uploaded assets.
+## Implemented API
+- GET /api/health
+- POST /api/auth/register
+- POST /api/auth/login
+- GET /api/users/me (Bearer token)
+- GET /api/users/search?q=...
+- GET /api/users/:username
+- POST /api/users/:username/follow (Bearer token)
+- GET /api/posts/feed
+- POST /api/posts (Bearer token)
+- DELETE /api/posts/:id (owner only)
+- POST /api/posts/:id/like (Bearer token)
+- GET /api/posts/:id/comments
+- POST /api/posts/:id/comments (Bearer token)
+- GET /api/messages/:username (Bearer token)
+- POST /api/messages/:username (Bearer token)
+- POST /api/media/signature (Bearer token)
 
-## Current endpoints
-- `GET /api/health`
-- `POST /api/media/signature` (development foundation; authentication guard is not wired yet)
+## Setup
+1. Use Node.js 20 or newer.
+2. In this folder run npm install.
+3. Copy .env.example to .env and set private environment values.
+4. Run npx prisma generate.
+5. Run npx prisma migrate dev --name init.
+6. Run npm run start:dev.
 
-## Next implementation steps
-1. PostgreSQL schema and migrations.
-2. Registration/login with password hashing and access/refresh token rotation.
-3. Auth guard and user-scoped upload signing.
-4. Posts, follows, likes, comments, messaging, moderation and notifications.
-5. Deployment and secret configuration.
+Never commit .env or put API secrets in the mobile app. Set DATABASE_URL, JWT_ACCESS_SECRET, and Cloudinary credentials in the hosting provider's private environment settings.
 
-Copy `.env.example` to `.env` locally and fill it only on a trusted machine or configure values in the hosting provider. Never put real values in GitHub.
+## Security and production status
+Passwords are hashed with bcrypt. API endpoints that modify user data require a signed access token. Upload signing is performed on the server and the endpoint requires authentication. Before production launch, add refresh-token rotation, email verification and recovery, rate limiting, upload ownership/limits, private-account follow requests, message privacy controls, moderation/reporting, audit logging, backups, and automated tests. The current follow toggle does not yet implement approval queues for private profiles. Messaging currently uses REST polling; real-time WebSocket delivery is not wired yet.
+
+This is a development foundation and has not yet been deployed or load/security tested.
