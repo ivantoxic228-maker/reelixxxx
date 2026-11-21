@@ -1,0 +1,56 @@
+name: Reelix Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "src/**"
+      - "assets/**"
+      - "app.json"
+      - "eas.json"
+      - "package.json"
+      - ".github/workflows/android-apk.yml"
+
+jobs:
+  build-apk:
+    name: Build installable Android APK
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_ACCOUNT: ${{ vars.EXPO_ACCOUNT }}
+      EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Check build settings
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Add EXPO_TOKEN in GitHub Settings > Secrets and variables > Actions > Secrets."
+            exit 1
+          fi
+          if [ -z "$EXPO_ACCOUNT" ]; then
+            echo "::error::Add EXPO_ACCOUNT in GitHub Settings > Secrets and variables > Actions > Variables."
+            exit 1
+          fi
+          if [ -z "$EXPO_PUBLIC_API_URL" ]; then
+            echo "::error::Add EXPO_PUBLIC_API_URL (your public backend URL, without /api) in GitHub Actions Variables."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Link or create Expo project
+        run: npx eas-cli@latest project:init --account "$EXPO_ACCOUNT" --non-interactive
+
+      - name: Build APK with Expo EAS
+        run: npx eas-cli@latest build --platform android --profile preview --non-interactive --wait
