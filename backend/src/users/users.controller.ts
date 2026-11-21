@@ -19,6 +19,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('me/posts') myPosts(@CurrentUser() user: { sub: string }) { return this.users.myPosts(user.sub); }
   @Get('search') search(@Query('q') q = '') { return q.trim().length < 2 ? [] : this.users.search(q.trim()); }
+  @Get(':username/posts') profilePosts(@Param('username') username: string) { return this.users.profilePosts(username); }
   @Get(':username') profile(@Param('username') username: string) { return this.users.profile(username); }
   @UseGuards(JwtAuthGuard)
   @Post(':username/follow') follow(@CurrentUser() user: { sub: string }, @Param('username') username: string) { return this.users.follow(user.sub, username); }
