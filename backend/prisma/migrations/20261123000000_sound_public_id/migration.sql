@@ -1,0 +1,1 @@
+ALTER TABLE "Sound" ADD COLUMN "publicId" TEXT;
