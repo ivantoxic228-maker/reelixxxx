@@ -4,5 +4,8 @@ import { HealthModule } from './health/health.module';
 import { MediaModule } from './media/media.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
-@Module({ imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, HealthModule, MediaModule] })
+import { PostsModule } from './posts/posts.module';
+import { UsersModule } from './users/users.module';
+import { MessagesModule } from './messages/messages.module';
+@Module({ imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, HealthModule, MediaModule, PostsModule, UsersModule, MessagesModule] })
 export class AppModule {}
