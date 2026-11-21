@@ -18,7 +18,7 @@ export class UsersService {
     return this.db.user.findMany({ where: { OR: [{ username: { contains: q, mode: 'insensitive' } }, { displayName: { contains: q, mode: 'insensitive' } }] }, take: 20, select: { id: true, username: true, displayName: true, avatarUrl: true, bio: true } });
   }
   async profile(username: string) {
-    const user = await this.db.user.findUnique({ where: { username: username.toLowerCase() }, select: { id: true, username: true, displayName: true, avatarUrl: true, bio: true, isPrivate: true, createdAt: true, _count: { select: { posts: true, followers: true, following: true } } } });
+    const user = await this.db.user.findUnique({ where: { username: username.toLowerCase() }, select: { id: true, username: true, displayName: true, avatarUrl: true, bio: true, isPrivate: true, isVerified: true, createdAt: true, _count: { select: { posts: true, followers: true, following: true } } } });
     if (!user) throw new NotFoundException('Пользователь не найден');
     return user;
   }
