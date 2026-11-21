@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../../src/theme";
 import { apiRequest } from "../../src/api";
 
-type Profile = { id: string; username: string; displayName: string; avatarUrl?: string | null; bio: string; isPrivate: boolean; _count: { posts: number; followers: number; following: number } };
+type Profile = { id: string; username: string; displayName: string; avatarUrl?: string | null; bio: string; isPrivate: boolean; isVerified?: boolean; _count: { posts: number; followers: number; following: number } };
 export default function UserProfileScreen() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -38,7 +38,7 @@ export default function UserProfileScreen() {
       <View style={styles.header}><Pressable onPress={() => router.back()}><Ionicons name="arrow-back" size={23} color={colors.text} /></Pressable><Text style={styles.headerTitle}>Профиль</Text><View style={{ width: 23 }} /></View>
       <View style={styles.profileTop}>
         <View style={styles.avatar}><Text style={styles.avatarText}>{(profile.displayName || profile.username).slice(0,1).toUpperCase()}</Text></View>
-        <Text style={styles.name}>{profile.displayName}</Text><Text style={styles.handle}>@{profile.username}</Text>
+        <Text style={styles.name}>{profile.displayName}{profile.isVerified ? "  ✓" : ""}</Text><Text style={styles.handle}>@{profile.username}</Text>
         <View style={styles.stats}><View style={styles.stat}><Text style={styles.statValue}>{profile._count.posts}</Text><Text style={styles.statLabel}>видео</Text></View><View style={styles.stat}><Text style={styles.statValue}>{profile._count.followers}</Text><Text style={styles.statLabel}>подписчики</Text></View><View style={styles.stat}><Text style={styles.statValue}>{profile._count.following}</Text><Text style={styles.statLabel}>подписки</Text></View></View>
         {!!profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
         <Pressable style={[styles.follow, following && styles.following]} onPress={toggleFollow} disabled={busy}><Text style={[styles.followText, following && styles.followingText]}>{busy ? "..." : following ? "Вы подписаны" : profile.isPrivate ? "Закрытый аккаунт" : "Подписаться"}</Text></Pressable>
